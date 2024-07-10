@@ -71,30 +71,22 @@ def get_headers(access_token):
     }
 
 def fetch_emails(access_token, account_id):
-    url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
+    url = f'https://mail.zoho.com/api/accounts/{account_id}/messages/view'
     headers = get_headers(access_token)
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f'Error fetching emails: {e}')
-        return None
+    response = requests.get(url, headers=headers)
+    return response.json()
+
 if 'access_token' in st.session_state:
     access_token = st.session_state['access_token']
-    account_id = '856879721'
+    account_id = '856879721'  # replace with your actual account ID
 
     if st.button('Fetch Emails'):
         emails_response = fetch_emails(access_token, account_id)
-        if emails_response.get('status', 'error') == 'success':
-           emails = emails_response.get('data', [])
-           st.session_state['emails'] = emails
+        if emails_response.get('status') == 'success':
+            emails = emails_response.get('data', [])
+            st.session_state['emails'] = emails
         else:
             st.error(f'Failed to fetch emails: {emails_response}')
-
-# Usage
-account_id = '856879721'  # replace with your actual account ID
-emails_response = fetch_emails(access_token, account_id)
 
 # Load pre-trained model and vectorizer
 with open('model.pkl', 'rb') as model_file:
@@ -104,24 +96,9 @@ with open('vectorizer.pkl', 'rb') as vectorizer_file:
     vectorizer = pickle.load(vectorizer_file)
 
 def predict_spam(email_contents):
-    try:
         email_vectors = vectorizer.transform(email_contents)
         predictions = model.predict(email_vectors)
         return predictions
-    except Exception as e:
-        st.error(f'Error predicting spam: {e}')
-        return []
-
-if 'access_token' in st.session_state:
-    access_token = st.session_state['access_token']
-
-    if st.button('Fetch Emails'):
-        emails_response = fetch_emails(access_token)
-        if emails_response and emails_response.get('status', 'error') == 'success':
-            emails = emails_response.get('data', [])
-            st.session_state['emails'] = emails
-        else:
-            st.error(f'Failed to fetch emails: {emails_response}')
 
 if 'emails' in st.session_state:
     emails = st.session_state['emails']
