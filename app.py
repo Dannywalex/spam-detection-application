@@ -60,7 +60,7 @@ if authorization_response:
         st.session_state['access_token'] = token['access_token']
         st.write('Access Token:', token)
     except Exception as e:
-        st.error(f'Error fetching token: {e}')
+        st.error(f'Error fetch token: {e}')
         st.stop()
 
 
