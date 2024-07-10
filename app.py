@@ -26,6 +26,10 @@ if st.button('Predict'):
 
 import streamlit as st
 from requests_oauthlib import OAuth2Session
+import requests
+import joblib
+
+# Zoho API credentials
 
 client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
 client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
@@ -33,22 +37,39 @@ redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.ap
 authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 token_url = 'https://accounts.zoho.com/oauth/v2/token'
 
+# Initialize OAuth2 session
 zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.ALL'])
 authorization_url, state = zoho.authorization_url(authorization_base_url)
 
-st.write(f'[Authorize Zoho]({authorization_url})')
+# Store the state in session
+st.session_state['oauth_state'] = state
 
+st.write(f'Please go to [this link]({authorization_url}) and authorize access.')
+
+# Get the authorization response URL from the user
 authorization_response = st.text_input('Paste the full redirect URL here:')
-
 
 if authorization_response:
     try:
-        token = zoho.fetch_token(token_url, client_secret=client_secret, authorization_response=authorization_response)
+        # Retrieve state from session and pass it to fetch_token
+        token = zoho.fetch_token(
+            token_url,
+            client_secret=client_secret,
+            authorization_response=authorization_response,
+            state=st.session_state['oauth_state']
+        )
         st.session_state['access_token'] = token['access_token']
         st.write('Access Token:', token)
     except Exception as e:
         st.error(f'Error fetching token: {e}')
         st.stop()
+
+
+def get_headers(access_token):
+    return {
+        'Authorization': f'Zoho-oauthtoken {access_token}',
+        'Content-Type': 'application/json'
+    }
 
 
 def fetch_emails(access_token):
@@ -103,5 +124,3 @@ if 'predictions' in st.session_state:
         st.write(f"Content: {email.get('content', 'No Content')}")
         st.write(f"Spam: {'Yes' if predictions[i] else 'No'}")
         st.write("---")
-
-
