@@ -74,12 +74,12 @@ def fetch_emails(access_token, account_id):
     url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
     try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            st.error(f'Error fetching emails: {e}')
-            return None
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f'Error fetching emails: {e}')
+        return None
 if 'access_token' in st.session_state:
     access_token = st.session_state['access_token']
     account_id = '856879721'
