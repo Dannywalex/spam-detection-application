@@ -41,7 +41,8 @@ zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.mess
 authorization_url, state = zoho.authorization_url(authorization_base_url)
 
 # Store the state in session
-st.session_state['oauth_state'] = state
+if 'oauth_state' not in st.session_state:
+    st.session_state['oauth_state'] = state
 
 st.write(f'[Authorize Zoho]({authorization_url})')
 
@@ -49,19 +50,14 @@ st.write(f'[Authorize Zoho]({authorization_url})')
 authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
-    try:
-        # Retrieve state from session and pass it to fetch_token
-        token = zoho.fetch_token(
-            'https://accounts.zoho.com/oauth/v2/token',
-            client_secret=client_secret,
-            authorization_response=authorization_response,
-            state=st.session_state['oauth_state']
-        )
-        st.session_state['access_token'] = token['access_token']
-        st.write('Access Token:', token)
-    except Exception as e:
-        st.error(f'Error fetching token: {e}')
-        st.stop()
+    zoho = OAuth2Session(client_id, redirect_uri=redirect_uri)
+    token = zoho.fetch_token(
+        'https://accounts.zoho.com/oauth/v2/token',
+        client_secret=client_secret,
+        authorization_response=authorization_response
+    )
+    st.session_state['access_token'] = token['access_token']
+    st.write('Access Token:', token)
 
 def get_headers(access_token):
     return {
