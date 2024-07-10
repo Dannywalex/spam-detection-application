@@ -51,7 +51,7 @@ authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
     try:
-        zoho = OAuth2Session(client_id, redirect_uri=redirect_uri)
+        zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=st.session_state['oauth_state'])
         token = zoho.fetch_token(
             'https://accounts.zoho.com/oauth/v2/token',
             client_secret=client_secret,
