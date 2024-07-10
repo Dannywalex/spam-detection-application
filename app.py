@@ -28,9 +28,12 @@ import streamlit as st
 from requests_oauthlib import OAuth2Session
 import requests
 import joblib
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Zoho API credentials
-
 client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
 client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
 redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.app'
@@ -51,6 +54,10 @@ authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
     try:
+        # Debug state values
+        logging.debug(f"Stored state: {st.session_state['oauth_state']}")
+        logging.debug(f"Authorization response: {authorization_response}")
+
         # Retrieve state from session and pass it to fetch_token
         token = zoho.fetch_token(
             token_url,
@@ -61,6 +68,7 @@ if authorization_response:
         st.session_state['access_token'] = token['access_token']
         st.write('Access Token:', token)
     except Exception as e:
+        logging.error(f"Error fetching token: {e}")
         st.error(f'Error fetching token: {e}')
         st.stop()
 
