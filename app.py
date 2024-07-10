@@ -51,6 +51,7 @@ authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
     try:
+        st.write("Authorization response received:", authorization_response)
         zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=st.session_state['oauth_state'])
         token = zoho.fetch_token(
             'https://accounts.zoho.com/oauth/v2/token',
@@ -71,7 +72,7 @@ def get_headers(access_token):
     }
 
 def fetch_emails(access_token, account_id):
-    url = f'https://mail.zoho.com/api/accounts/{account_id}/messages/view'
+    url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
     response = requests.get(url, headers=headers)
     return response.json()
