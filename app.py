@@ -70,16 +70,18 @@ def get_headers(access_token):
         'Content-Type': 'application/json'
     }
 
-def fetch_emails(access_token):
-    url = 'https://mail.zoho.com/api/accounts/856879721/messages'
-    headers = get_headers(access_token)
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f'Error fetching emails: {e}')
-        return None
+def fetch_emails(access_token, account_id):
+    url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
+    headers = {
+        'Authorization': f'Zoho-oauthtoken {access_token}',
+        'Content-Type': 'application/json'
+    }
+    response = requests.get(url, headers=headers)
+    return response.json()
+
+# Usage
+account_id = '856879721'  # replace with your actual account ID
+emails_response = fetch_emails(access_token, account_id)
 
 # Load pre-trained model and vectorizer
 with open('model.pkl', 'rb') as model_file:
