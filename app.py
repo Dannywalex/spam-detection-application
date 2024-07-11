@@ -119,16 +119,7 @@ if 'access_token' in st.session_state:
     account_id = '856879721'  # replace with your actual account ID
 
     if st.button('Fetch Emails'):
-        folder = 'inbox'
-        limit = 20
-        start = 0
-        status = 'unread'
-        search = 'urgent'
-        from_date = '2022-01-01'
-        to_date = '2022-01-31'
-
-        emails_response = fetch_emails(access_token, account_id, folder, limit, start, status, search, from_date,
-                                       to_date)
+        emails_response = fetch_emails(access_token, account_id)
         if emails_response.get('status') == 'success':
             emails = emails_response.get('data', [])
             st.session_state['emails'] = emails
