@@ -32,8 +32,8 @@ import pickle
 import time
 
 # Zoho API credentials
-client_id = '1000.BXSL7XM9FXXCV868OTQL9OLLQ1RZBS'
-client_secret = '88739ce863131beda2fd855e7b1d466401130301e9'
+client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
+client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
 redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.app'
 authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 
