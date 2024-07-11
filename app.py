@@ -38,7 +38,7 @@ redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.ap
 authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 
 # Initialize OAuth2 session
-zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.account.READ'])
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.READ','offline_access'])
 authorization_url, state = zoho.authorization_url(authorization_base_url)
 
 # Store the state in session
