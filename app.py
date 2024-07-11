@@ -54,13 +54,6 @@ if authorization_response:
     try:
         zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=st.session_state['oauth_state'])
 
-        # Log the authorization response for debugging
-        st.write(f"Authorization Response: {authorization_response}")
-
-        # Extract the authorization code from the response
-        authorization_code = authorization_response.split('code=')[1].split('&')[0]
-        st.write(f"Authorization Code: {authorization_code}")
-
         token = zoho.fetch_token(
             'https://accounts.zoho.com/oauth/v2/token',
             code=authorization_code,
