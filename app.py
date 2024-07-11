@@ -56,7 +56,6 @@ if authorization_response:
 
         token = zoho.fetch_token(
             'https://accounts.zoho.com/oauth/v2/token',
-            code=authorization_code,
             client_secret=client_secret,
             include_client_id=True
         )
