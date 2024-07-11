@@ -31,39 +31,23 @@ import requests
 import pickle
 import time
 
-# Zoho API credentials
-client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
-client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
-redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.app'
-authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
-
-# Initialize OAuth2 session
-zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.READ','offline_access'])
-authorization_url, state = zoho.authorization_url(authorization_base_url)
+import streamlit as st
+import time
+import pickle
+from tokens import get_authorization_url, fetch_token, refresh_access_token, fetch_emails
 
 # Store the state in session
 if 'oauth_state' not in st.session_state:
+    authorization_url, state = get_authorization_url()
     st.session_state['oauth_state'] = state
-
-st.write(f'[Authorize Zoho]({authorization_url})')
+    st.write(f'[Authorize Zoho]({authorization_url})')
 
 # Get the authorization response URL from the user
 authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
     try:
-        zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=st.session_state['oauth_state'])
-
-        # Extract the authorization code from the response URL
-        authorization_code = authorization_response.split('code=')[1].split('&')[0]
-        st.write(f"Authorization Code: {authorization_code}")
-
-        token = zoho.fetch_token(
-            'https://accounts.zoho.com/oauth/v2/token',
-            code=authorization_code,
-            client_secret=client_secret,
-            include_client_id=True
-        )
+        token = fetch_token(authorization_response, st.session_state['oauth_state'])
         st.session_state['access_token'] = token['access_token']
         st.session_state['refresh_token'] = token.get('refresh_token')
         st.session_state['token_expires_at'] = time.time() + token['expires_in']
@@ -72,43 +56,16 @@ if authorization_response:
         st.error(f'Error fetching token: {e}')
         st.stop()
 
-
-def get_headers(access_token):
-    return {
-        'Authorization': f'Zoho-oauthtoken {access_token}',
-        'Content-Type': 'application/json'
-    }
-
-def fetch_emails(access_token, account_id):
-    url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
-    headers = get_headers(access_token)
-
-    response = requests.get(url, headers=headers)
-    return response.json()
-
-def refresh_access_token():
-    refresh_token = st.session_state['refresh_token']
-    extra = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-    }
-    zoho = OAuth2Session(client_id, token={
-        'refresh_token': refresh_token,
-        'token_type': 'Bearer',
-        'expires_in': -30,
-    })
-    new_token = zoho.refresh_token(token_url, **extra)
-    st.session_state['access_token'] = new_token['access_token']
-    st.session_state['token_expires_at'] = time.time() + new_token['expires_in']
-    st.write('New Access Token:', new_token)
-
 if 'access_token' in st.session_state:
     if 'token_expires_at' in st.session_state and time.time() > st.session_state['token_expires_at']:
         st.write('Access token expired, refreshing...')
-        refresh_access_token()
+        new_token = refresh_access_token(st.session_state['refresh_token'])
+        st.session_state['access_token'] = new_token['access_token']
+        st.session_state['token_expires_at'] = time.time() + new_token['expires_in']
+        st.write('New Access Token:', new_token)
 
     access_token = st.session_state['access_token']
-    account_id = '856879721'  # replace with your actual account ID
+    account_id = 'YOUR_ACCOUNT_ID'
 
     if st.button('Fetch Emails'):
         emails_response = fetch_emails(access_token, account_id)
@@ -126,9 +83,9 @@ with open('vectorizer.pkl', 'rb') as vectorizer_file:
     vectorizer = pickle.load(vectorizer_file)
 
 def predict_spam(email_contents):
-        email_vectors = vectorizer.transform(email_contents)
-        predictions = model.predict(email_vectors)
-        return predictions
+    email_vectors = vectorizer.transform(email_contents)
+    predictions = model.predict(email_vectors)
+    return predictions
 
 if 'emails' in st.session_state:
     emails = st.session_state['emails']
@@ -147,4 +104,3 @@ if 'predictions' in st.session_state:
         st.write(f"Content: {email.get('content', 'No Content')}")
         st.write(f"Spam: {'Yes' if predictions[i] else 'No'}")
         st.write("---")
-
