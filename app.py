@@ -73,15 +73,43 @@ def get_headers(access_token):
 def fetch_emails(access_token, account_id):
     url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
+    params = {
+        'folder': folder,
+        'limit': limit,
+        'start': start,
+    }
+
+    if status:
+        params['status'] = status
+    if search:
+        params['search'] = search
+    if from_date:
+        params['fromDate'] = from_date
+    if to_date:
+        params['toDate'] = to_date
+
     response = requests.get(url, headers=headers)
     return response.json()
 
 if 'access_token' in st.session_state:
+    if time.time() > st.session_state['token_expires_at']:
+        st.write('Access token expired, refreshing...')
+        refresh_access_token()
+
     access_token = st.session_state['access_token']
     account_id = '856879721'  # replace with your actual account ID
 
     if st.button('Fetch Emails'):
-        emails_response = fetch_emails(access_token, account_id)
+        folder = 'inbox'
+        limit = 20
+        start = 0
+        status = 'unread'
+        search = 'urgent'
+        from_date = '2022-01-01'
+        to_date = '2022-01-31'
+
+        emails_response = fetch_emails(access_token, account_id, folder, limit, start, status, search, from_date,
+                                       to_date)
         if emails_response.get('status') == 'success':
             emails = emails_response.get('data', [])
             st.session_state['emails'] = emails
