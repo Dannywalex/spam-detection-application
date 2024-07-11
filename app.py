@@ -79,23 +79,9 @@ def get_headers(access_token):
         'Content-Type': 'application/json'
     }
 
-def fetch_emails(access_token, account_id, folder='inbox', limit=20, start=0, status=None, search=None, from_date=None, to_date=None):
+def fetch_emails(access_token, account_id):
     url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
-    params = {
-        'folder': folder,
-        'limit': limit,
-        'start': start,
-    }
-
-    if status:
-        params['status'] = status
-    if search:
-        params['search'] = search
-    if from_date:
-        params['fromDate'] = from_date
-    if to_date:
-        params['toDate'] = to_date
 
     response = requests.get(url, headers=headers)
     return response.json()
