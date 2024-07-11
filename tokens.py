@@ -9,7 +9,7 @@ authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 token_url = 'https://accounts.zoho.com/oauth/v2/token'
 
 def get_authorization_url():
-    zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.READ', 'offline_access'])
+    zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.accounts.READ', 'ZohoMail.messages.READ', 'ZohoMail.folders.READ', 'offline_access'])
     authorization_url, state = zoho.authorization_url(authorization_base_url)
     return authorization_url, state
 
