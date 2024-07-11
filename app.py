@@ -38,7 +38,7 @@ redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.ap
 authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 
 # Initialize OAuth2 session
-zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.ALL'])
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.ALL','offline access'])
 authorization_url, state = zoho.authorization_url(authorization_base_url)
 
 # Store the state in session
@@ -59,6 +59,8 @@ if authorization_response:
             authorization_response=authorization_response
         )
         st.session_state['access_token'] = token['access_token']
+        st.session_state['refresh_token'] = token.get('refresh_token')
+        st.session_state['token_expires_at'] = time.time() + token['expires_in']
         st.write('Access Token:', token)
     except Exception as e:
         st.error(f'Error fetching token: {e}')
