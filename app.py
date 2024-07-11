@@ -43,7 +43,7 @@ authorization_url, state = zoho.authorization_url(authorization_base_url)
 
 # Store the state in session
 if 'oauth_state' not in st.session_state:
-    st.session_state['oauth_state'] = state
+    st.session_state.oauth_state = state
 
 st.write(f'[Authorize Zoho]({authorization_url})')
 
@@ -52,17 +52,14 @@ authorization_response = st.text_input('Paste the full redirect URL here:')
 
 if authorization_response:
     try:
-        zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=st.session_state['oauth_state'])
-
-        # Extract the authorization code from the response URL
-        authorization_code = authorization_response.split('code=')[1].split('&')[0]
-        st.write(f"Authorization Code: {authorization_code}")
+        # Retrieve the stored state
+        state = st.session_state.oauth_state
 
         token = zoho.fetch_token(
             'https://accounts.zoho.com/oauth/v2/token',
-            code=authorization_code,
             client_secret=client_secret,
-            include_client_id=True
+            authorization_response=authorization_response,
+            state=state
         )
         st.session_state['access_token'] = token['access_token']
         st.session_state['refresh_token'] = token.get('refresh_token')
@@ -79,26 +76,16 @@ def get_headers(access_token):
         'Content-Type': 'application/json'
     }
 
-def fetch_emails(access_token, account_id, folder='inbox', limit=20, start=0, status=None, search=None, from_date=None, to_date=None):
+def fetch_emails(access_token, account_id):
     url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
-    params = {
-        'folder': folder,
-        'limit': limit,
-        'start': start,
-    }
-
-    if status:
-        params['status'] = status
-    if search:
-        params['search'] = search
-    if from_date:
-        params['fromDate'] = from_date
-    if to_date:
-        params['toDate'] = to_date
-
-    response = requests.get(url, headers=headers)
-    return response.json()
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f'Error fetching emails: {e}')
+        return None
 
 def refresh_access_token():
     refresh_token = st.session_state['refresh_token']
@@ -126,7 +113,7 @@ if 'access_token' in st.session_state:
 
     if st.button('Fetch Emails'):
         emails_response = fetch_emails(access_token, account_id)
-        if emails_response.get('status') == 'success':
+        if emails_response and emails_response.get('status', 'error') == 'success':
             emails = emails_response.get('data', [])
             st.session_state['emails'] = emails
         else:
