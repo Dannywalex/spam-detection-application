@@ -29,6 +29,7 @@ import streamlit as st
 from requests_oauthlib import OAuth2Session
 import requests
 import pickle
+import time
 
 # Zoho API credentials
 client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
@@ -70,7 +71,7 @@ def get_headers(access_token):
         'Content-Type': 'application/json'
     }
 
-def fetch_emails(access_token, account_id):
+def fetch_emails(access_token, account_id, folder='inbox', limit=20, start=0, status=None, search=None, from_date=None, to_date=None):
     url = f'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
     params = {
@@ -91,8 +92,24 @@ def fetch_emails(access_token, account_id):
     response = requests.get(url, headers=headers)
     return response.json()
 
+def refresh_access_token():
+    refresh_token = st.session_state['refresh_token']
+    extra = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+    }
+    zoho = OAuth2Session(client_id, token={
+        'refresh_token': refresh_token,
+        'token_type': 'Bearer',
+        'expires_in': -30,
+    })
+    new_token = zoho.refresh_token(token_url, **extra)
+    st.session_state['access_token'] = new_token['access_token']
+    st.session_state['token_expires_at'] = time.time() + new_token['expires_in']
+    st.write('New Access Token:', new_token)
+
 if 'access_token' in st.session_state:
-    if time.time() > st.session_state['token_expires_at']:
+    if 'token_expires_at' in st.session_state and time.time() > st.session_state['token_expires_at']:
         st.write('Access token expired, refreshing...')
         refresh_access_token()
 
