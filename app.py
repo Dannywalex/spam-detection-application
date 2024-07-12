@@ -5,8 +5,12 @@ import time
 from requests_oauthlib import OAuth2Session
 
 # Load the token
-with open('token.pkl', 'rb') as token_file:
-    token = pickle.load(token_file)
+try:
+    with open('token.pkl', 'rb') as token_file:
+        token = pickle.load(token_file)
+except FileNotFoundError:
+    st.error('token.pkl not found. Please run tokens.py first to obtain tokens.')
+    st.stop()
 
 # Zoho API credentials
 client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
@@ -30,7 +34,6 @@ def fetch_account_details(access_token):
 def fetch_emails(access_token):
     url = 'https://mail.zoho.com/api/accounts/856879721/messages/view'
     headers = get_headers(access_token)
-
     response = requests.get(url, headers=headers)
     return response.json()
 
