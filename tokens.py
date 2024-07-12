@@ -10,19 +10,22 @@ authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 token_url = 'https://accounts.zoho.com/oauth/v2/token'
 
 # Initialize OAuth2 session
-zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.READ','online_access'])
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.messages.READ','offline_access'])
 
 # Step 1: Redirect user to Zoho for authorization
 authorization_url, state = zoho.authorization_url(authorization_base_url)
-print('Please go to %s and authorize access.' % authorization_url)
+print(f'Please go to this URL and authorize access: {authorization_url}')
 
-# Step 2: User will paste the full redirect URL after authorization
-redirect_response = input('Paste the full redirect URL here:')
+# Get the authorization response URL from the user
+authorization_response = input('Paste the full redirect URL here: ')
 
-# Step 3: Fetch the access token
-zoho.fetch_token(token_url, authorization_response=redirect_response, client_secret=client_secret, include_client_id=True)
-print('Access token:', zoho.token)
+
+# Fetch the access and refresh tokens
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=state)
+token = zoho.fetch_token(token_url, authorization_response=authorization_response, client_secret=client_secret, include_client_id=True)
 
 # Save the token to a file for later use
 with open('token.pkl', 'wb') as token_file:
     pickle.dump(zoho.token, token_file)
+
+print('Tokens have been successfully obtained and saved.')
