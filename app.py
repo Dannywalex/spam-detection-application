@@ -55,21 +55,25 @@ if st.button("Fetch Emails"):
                     if isinstance(response_part, tuple):
                         # Parse the email content
                         msg = email.message_from_bytes(response_part[1])
-                        subject = decode_header(msg["Subject"])[0][0]
+                        subject, encoding = decode_header(msg["Subject"])[0]
                         if isinstance(subject, bytes):
-                            subject = subject.decode()
+                            subject = subject.decode(encoding if encoding else 'utf-8')
                         email_details = {"subject": subject}
                         if msg.is_multipart():
                             for part in msg.walk():
                                 content_type = part.get_content_type()
                                 content_disposition = str(part.get("Content-Disposition"))
                                 if "attachment" not in content_disposition:
-                                    body = part.get_payload(decode=True).decode()
-                                    email_details["body"] = body
-                        else:
-                            body = msg.get_payload(decode=True).decode()
-                            email_details["body"] = body
-                        emails.append(email_details)
+                                    payload = part.get_payload(decode=True)
+                                    if payload:
+                                        body = payload.decode()
+                                        email_details["body"] = body
+                                else:
+                                    payload = msg.get_payload(decode=True)
+                                    if payload:
+                                        body = payload.decode()
+                                        email_details["body"] = body
+                                emails.append(email_details)
 
             mail.logout()
 
