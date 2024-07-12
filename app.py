@@ -72,7 +72,7 @@ st.write("Account Details:", account_details)
 
 if st.button('Fetch Emails'):
     if 'data' in account_details:
-        account_id = account_details['data'][0]['8848984000000008002']  # Adjust this line based on your account details response
+        account_id = account_details['data'][0]['accountId']  # Adjust this line based on your account details response
         emails_response = fetch_emails(access_token)
         if emails_response.get('status', {}).get('description') == 'success':
             emails = emails_response.get('data', [])
