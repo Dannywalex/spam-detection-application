@@ -93,6 +93,7 @@ def fetch_account_details(access_token):
 # Fetch and display account details
 account_details = fetch_account_details(access_token)
 if 'data' in account_details:
+    st.write(account_details['data'][0])
     account_id = account_details['data'][0]['accountId']  # Extract the account ID
 
 if st.button('Fetch Emails'):
