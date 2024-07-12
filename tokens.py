@@ -26,6 +26,6 @@ token = zoho.fetch_token(token_url, authorization_response=authorization_respons
 
 # Save the token to a file for later use
 with open('token.pkl', 'wb') as token_file:
-    pickle.dump(zoho.token, token_file)
+    pickle.dump(token, token_file)
 
 print('Tokens have been successfully obtained and saved.')
