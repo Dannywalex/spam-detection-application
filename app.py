@@ -21,6 +21,11 @@ def get_headers(access_token):
         'Authorization': f'Zoho-oauthtoken {access_token}',
         'Content-Type': 'application/json'
     }
+def fetch_account_details(access_token):
+    url = 'https://mail.zoho.com/api/accounts'
+    headers = get_headers(access_token)
+    response = requests.get(url, headers=headers)
+    return response.json()
 
 def fetch_emails(access_token):
     url = 'https://mail.zoho.com/api/accounts/856879721/messages/view'
@@ -58,16 +63,26 @@ if time.time() > st.session_state['token_expires_at']:
 
 access_token = st.session_state['access_token']
 
+# Fetch and display account details
+account_details = fetch_account_details(access_token)
+st.write("Account Details:", account_details)
+
 if st.button('Fetch Emails'):
-    emails_response = fetch_emails(access_token)
-    if emails_response.get('status') == 'success':
-        emails = emails_response.get('data', [])
-        st.session_state['emails'] = emails
+    if 'data' in account_details:
+        account_id = account_details['data'][0]['accountId']  # Adjust this line based on your account details response
+        emails_response = fetch_emails(access_token, account_id)
+        if emails_response.get('status', {}).get('description') == 'success':
+            emails = emails_response.get('data', [])
+            st.session_state['emails'] = emails
+        else:
+            st.error(f'Failed to fetch emails: {emails_response}')
     else:
-        st.error(f'Failed to fetch emails: {emails_response}')
+        st.error('No account data found.')
 
 if 'emails' in st.session_state:
     emails = st.session_state['emails']
+    if not emails:
+        st.write("No emails found.")
     for email in emails:
         st.write(f"Subject: {email.get('subject', 'No Subject')}")
         st.write(f"From: {email.get('fromAddress', 'Unknown')}")
