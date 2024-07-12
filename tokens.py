@@ -10,7 +10,7 @@ authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 token_url = 'https://accounts.zoho.com/oauth/v2/token'
 
 # Initialize OAuth2 session
-zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.accounts.READ', 'ZohoMail.folders.READ','ZohoMail.messages.READ' 'offline_access'])
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.accounts.READ','offline_access'])
 
 # Step 1: Redirect user to Zoho for authorization
 authorization_url, state = zoho.authorization_url(authorization_base_url)
