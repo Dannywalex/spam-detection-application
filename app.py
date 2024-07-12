@@ -1,8 +1,8 @@
 import streamlit as st
-import requests
 import pickle
-import time
-from requests_oauthlib import OAuth2Session
+import imaplib
+import email
+from email.header import decode_header
 
 
 feature_extraction = pickle.load(open('vectorizer.pkl','rb'))
@@ -26,94 +26,61 @@ if st.button('Predict'):
   else:
    st.header("Spam")
 
+# Your Zoho Mail credentials
+username = st.text_input("Email", "dannywalex@zohomail.com")
+password = st.text_input("Password", "$Sthelen69", type="password")
 
-# Load the token
-try:
-    with open('token.pkl', 'rb') as token_file:
-        token = pickle.load(token_file)
-except FileNotFoundError:
-    st.error('token.pkl not found. Please run tokens.py first to obtain tokens.')
-    st.stop()
+if st.button("Fetch Emails"):
+    if username and password:
+        try:
+            # Connect to the server
+            mail = imaplib.IMAP4_SSL("imap.zoho.com")
 
-# Zoho API credentials
-client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
-client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
-token_url = 'https://accounts.zoho.com/oauth/v2/token'
+            # Login to your account
+            mail.login(username, password)
 
-# Initialize OAuth2 session with the token
-zoho = OAuth2Session(client_id, token=token)
+            # Select the mailbox you want to use
+            mail.select("inbox")
 
-def get_headers(access_token):
-    return {
-        'Authorization': f'Zoho-oauthtoken {access_token}',
-        'Content-Type': 'application/json'
-    }
-def fetch_account_details(access_token):
-    url = 'https://mail.zoho.com/api/accounts'
-    headers = get_headers(access_token)
-    response = requests.get(url, headers=headers)
-    return response.json()
+            # Search for all emails in the mailbox
+            status, messages = mail.search(None, "ALL")
+            mail_ids = messages[0].split()
 
-def fetch_emails(access_token):
-    url = 'https://mail.zoho.com/api/accounts/8848984000000008002/messages/view'
-    headers = get_headers(access_token)
-    response = requests.get(url, headers=headers)
-    return response.json()
+            emails = []
+            for mail_id in mail_ids:
+                # Fetch the email by ID
+                status, msg_data = mail.fetch(mail_id, "(RFC822)")
 
-def refresh_access_token():
-    refresh_token = token['refresh_token']
-    extra = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-    }
-    zoho = OAuth2Session(client_id, token={
-        'refresh_token': refresh_token,
-        'token_type': 'Bearer',
-        'expires_in': -30,
-    })
-    new_token = zoho.refresh_token(token_url, **extra)
-    with open('token.pkl', 'wb') as token_file:
-        pickle.dump(new_token, token_file)
-    st.session_state['access_token'] = new_token['access_token']
-    st.session_state['token_expires_at'] = time.time() + new_token['expires_in']
-    st.write('New Access Token:', new_token)
+                for response_part in msg_data:
+                    if isinstance(response_part, tuple):
+                        # Parse the email content
+                        msg = email.message_from_bytes(response_part[1])
+                        subject = decode_header(msg["Subject"])[0][0]
+                        if isinstance(subject, bytes):
+                            subject = subject.decode()
+                        email_details = {"subject": subject}
+                        if msg.is_multipart():
+                            for part in msg.walk():
+                                content_type = part.get_content_type()
+                                content_disposition = str(part.get("Content-Disposition"))
+                                if "attachment" not in content_disposition:
+                                    body = part.get_payload(decode=True).decode()
+                                    email_details["body"] = body
+                        else:
+                            body = msg.get_payload(decode=True).decode()
+                            email_details["body"] = body
+                        emails.append(email_details)
 
-if 'access_token' not in st.session_state:
-    st.session_state['access_token'] = token['access_token']
-    st.session_state['refresh_token'] = token['refresh_token']
-    st.session_state['token_expires_at'] = time.time() + token['expires_in']
+            mail.logout()
 
-if time.time() > st.session_state['token_expires_at']:
-    st.write('Access token expired, refreshing...')
-    refresh_access_token()
+            for email in emails:
+                st.write(f"Subject: {email['subject']}")
+                st.write(f"Body: {email['body']}")
+                st.write("---")
 
-access_token = st.session_state['access_token']
-
-# Fetch account details
-account_details = fetch_account_details(access_token)
-st.write("Account Details:", account_details)
-
-
-if st.button('Fetch Emails'):
-    if 'data' in account_details:
-        account_id = account_details['data'][0]['accountId']  # Extract the account ID
-        emails_response = fetch_emails(access_token,)
-        if emails_response and emails_response.get('status', {}).get('description') == 'success':
-            emails = emails_response.get('data', [])
-            st.session_state['emails'] = emails
-        else:
-            st.error(f'Failed to fetch emails: {emails_response}')
+        except Exception as e:
+            st.error(f"Failed to fetch emails: {e}")
     else:
-        st.error('No account data found.')
+        st.warning("Please enter your email and password.")
 
-if 'emails' in st.session_state:
-    emails = st.session_state['emails']
-    if not emails:
-        st.write("No emails found.")
-    else:
-        email_contents = [email.get('content', '') for email in emails]
-    for email in emails:
-        st.write(f"Subject: {email.get('subject', 'No Subject')}")
-        st.write(f"From: {email.get('fromAddress', 'Unknown')}")
-        st.write(f"Content: {email.get('content', 'No Content')}")
-        st.write("---")
+
