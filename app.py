@@ -105,7 +105,6 @@ if st.button('Fetch Emails'):
     else:
         st.error('No account data found.')
 
-# Load pre-trained model and vectorizer
 if 'emails' in st.session_state:
     emails = st.session_state['emails']
     if not emails:
