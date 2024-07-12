@@ -82,12 +82,40 @@ if st.button('Fetch Emails'):
     else:
         st.error('No account data found.')
 
+# Load pre-trained model and vectorizer
+try:
+    with open('model.pkl', 'rb') as model_file:
+        model = pickle.load(model_file)
+    with open('vectorizer.pkl', 'rb') as vectorizer_file:
+        vectorizer = pickle.load(vectorizer_file)
+except FileNotFoundError:
+    st.error('Model or vectorizer file not found.')
+    st.stop()
+
+
+def predict_spam(email_contents):
+    email_vectors = vectorizer.transform(email_contents)
+    predictions = model.predict(email_vectors)
+    return predictions
+
+
+# Predict and display spam status
 if 'emails' in st.session_state:
     emails = st.session_state['emails']
     if not emails:
         st.write("No emails found.")
-    for email in emails:
+    else:
+        email_contents = [email.get('content', '') for email in emails]
+        predictions = predict_spam(email_contents)
+        st.session_state['predictions'] = predictions
+
+if 'predictions' in st.session_state:
+    emails = st.session_state['emails']
+    predictions = st.session_state['predictions']
+
+    for i, email in enumerate(emails):
         st.write(f"Subject: {email.get('subject', 'No Subject')}")
         st.write(f"From: {email.get('fromAddress', 'Unknown')}")
         st.write(f"Content: {email.get('content', 'No Content')}")
+        st.write(f"Spam: {'Yes' if predictions[i] else 'No'}")
         st.write("---")
