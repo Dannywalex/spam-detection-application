@@ -3,7 +3,7 @@ import pickle
 import imaplib
 import email
 from email.header import decode_header
-
+import chardet
 
 feature_extraction = pickle.load(open('vectorizer.pkl','rb'))
 model = pickle.load(open('model.pkl','rb'))
@@ -25,6 +25,19 @@ if st.button('Predict'):
    st.header("Not Spam")
   else:
    st.header("Spam")
+
+def decode_text(text):
+    try:
+        # Attempt to decode using utf-8
+        return text.decode('utf-8')
+    except (UnicodeDecodeError, AttributeError):
+        # If decoding fails, use chardet to detect encoding
+        detected_encoding = chardet.detect(text)['encoding']
+        if detected_encoding:
+            return text.decode(detected_encoding)
+        return text
+
+
 
 # Your Zoho Mail credentials
 username = st.text_input("Email", "dannywalex@zohomail.com")
@@ -66,12 +79,12 @@ if st.button("Fetch Emails"):
                                 if "attachment" not in content_disposition:
                                     payload = part.get_payload(decode=True)
                                     if payload:
-                                        body = payload.decode()
+                                        body = decode_text(payload)
                                         email_details["body"] = body
                                 else:
                                     payload = msg.get_payload(decode=True)
                                     if payload:
-                                        body = payload.decode()
+                                        body = decode_text(payload)
                                         email_details["body"] = body
                                 emails.append(email_details)
 
@@ -79,7 +92,7 @@ if st.button("Fetch Emails"):
 
             for email in emails:
                 st.write(f"Subject: {email['subject']}")
-                st.write(f"Body: {email['body']}")
+                st.write(f"Body: {email.get('body', 'No body content')}")
                 st.write("---")
 
         except Exception as e:
