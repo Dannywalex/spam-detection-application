@@ -1,49 +1,28 @@
-import requests
 from requests_oauthlib import OAuth2Session
 import time
+import pickle
 
+# Zoho API credentials
 client_id = '1000.CPBA8L32MSF7LFDZLGER6OE5GGT6AA'
 client_secret = '9d9a0660b87dedaad28f1c3890796d6b86d5bc7a32'
 redirect_uri = 'https://email-spam-detection-bluruuqhzkcgr58hbheduu.streamlit.app'
 authorization_base_url = 'https://accounts.zoho.com/oauth/v2/auth'
 token_url = 'https://accounts.zoho.com/oauth/v2/token'
 
-def get_authorization_url():
-    zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.accounts.READ', 'ZohoMail.messages.READ', 'ZohoMail.folders.READ', 'offline_access'])
-    authorization_url, state = zoho.authorization_url(authorization_base_url)
-    return authorization_url, state
+# Initialize OAuth2 session
+zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, scope=['ZohoMail.accounts.READ', 'ZohoMail.messages.READ', 'ZohoMail.folders.READ', 'offline_access'])
 
-def fetch_token(authorization_response, state):
-    zoho = OAuth2Session(client_id, redirect_uri=redirect_uri, state=state)
-    token = zoho.fetch_token(
-        token_url,
-        authorization_response=authorization_response,
-        client_secret=client_secret,
-        include_client_id=True
-    )
-    return token
+# Step 1: Redirect user to Zoho for authorization
+authorization_url, state = zoho.authorization_url(authorization_base_url)
+print('Please go to %s and authorize access.' % authorization_url)
 
-def refresh_access_token(refresh_token):
-    extra = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-    }
-    zoho = OAuth2Session(client_id, token={
-        'refresh_token': refresh_token,
-        'token_type': 'Bearer',
-        'expires_in': -30,
-    })
-    new_token = zoho.refresh_token(token_url, **extra)
-    return new_token
+# Step 2: User will paste the full redirect URL after authorization
+redirect_response = input('Paste the full redirect URL here:')
 
-def get_headers(access_token):
-    return {
-        'Authorization': f'Zoho-oauthtoken {access_token}',
-        'Content-Type': 'application/json'
-    }
+# Step 3: Fetch the access token
+zoho.fetch_token(token_url, authorization_response=redirect_response, client_secret=client_secret, include_client_id=True)
+print('Access token:', zoho.token)
 
-def fetch_emails(access_token, account_id):
-    url = f'https://mail.zoho.com/api/accounts/8848984000000008002/messages/view'
-    headers = get_headers(access_token)
-    response = requests.get(url, headers=headers)
-    return response.json()
+# Save the token to a file for later use
+with open('token.pkl', 'wb') as token_file:
+    pickle.dump(zoho.token, token_file)
