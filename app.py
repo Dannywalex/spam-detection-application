@@ -71,7 +71,7 @@ if st.button("Fetch Emails"):
                         subject, encoding = decode_header(msg["Subject"])[0]
                         if isinstance(subject, bytes):
                             subject = decode_text(subject)
-                            email_details = {"subject": subject, "body": ""}
+                        email_details = {"subject": subject, "body": ""}
 
                         if msg.is_multipart():
                             for part in msg.walk():
