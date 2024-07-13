@@ -70,8 +70,9 @@ if st.button("Fetch Emails"):
                         msg = email.message_from_bytes(response_part[1])
                         subject, encoding = decode_header(msg["Subject"])[0]
                         if isinstance(subject, bytes):
-                            subject = subject.decode(encoding if encoding else 'utf-8')
-                        email_details = {"subject": subject}
+                            subject = decode_text(subject)
+                            email_details = {"subject": subject, "body": ""}
+
                         if msg.is_multipart():
                             for part in msg.walk():
                                 content_type = part.get_content_type()
@@ -80,7 +81,7 @@ if st.button("Fetch Emails"):
                                     payload = part.get_payload(decode=True)
                                     if payload:
                                         body = decode_text(payload)
-                                        email_details["body"] = body
+                                        email_details["body"] += body
                                 else:
                                     payload = msg.get_payload(decode=True)
                                     if payload:
