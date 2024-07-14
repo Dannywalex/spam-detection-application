@@ -74,14 +74,16 @@ if st.button("Fetch Emails"):
                         email_details = {"subject": subject, "body": ""}
 
                         if msg.is_multipart():
+                            # Only add the body of the first part of the multipart message
                             for part in msg.walk():
                                 content_type = part.get_content_type()
                                 content_disposition = str(part.get("Content-Disposition"))
-                                if "attachment" not in content_disposition:
+                                if content_type == "text/plain" and "attachment" not in content_disposition:
                                     payload = part.get_payload(decode=True)
                                     if payload:
                                         body = decode_text(payload)
                                         email_details["body"] += body
+                                    break  # Exit after processing the first text/plain part
                                 else:
                                     payload = msg.get_payload(decode=True)
                                     if payload:
